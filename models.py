@@ -1,0 +1,69 @@
+from tensorflow.keras.layers import (
+    Input, Conv2D, PReLU,
+    MaxPool2D, Reshape
+)
+from tensorflow.keras.models import Model
+
+
+
+class Pnet:
+
+    def __init__(self, input_shape = (12, 12, 3)):
+        self.input_shape = input_shape
+        self.build_network()
+    
+    
+    def pnet_conv_block(self, input_tensor, n_filters, layer_id, pooling = False):
+        # Conv Layer
+        x = Conv2D(
+            n_filters, (3, 3),
+            strides = 1, padding = 'valid',
+            name = 'pnet_conv_' + str(layer_id)
+        )(input_tensor)
+        # PReLU Activation Layer
+        x = PReLU(
+            name = 'pnet_prelu_' + str(layer_id)
+        )(x)
+        # Pooling Layer
+        if pooling:
+            x = MaxPool2D(pool_size = 2)(x)
+        return x
+    
+
+    def face_classifier_block(self, input_tensor):
+        x = Conv2D(2, (1, 1), activation = 'softmax', name = 'face_classifier')(input_tensor)
+        x = Reshape((2,), name = 'face_classifier_output')(x)
+        return x
+    
+
+    def bounding_box_prediction_block(self, input_tensor):
+        x = Conv2D(4, (1, 1), name = 'bounding_box_regressor')(input_tensor)
+        x = Reshape((4,), name = 'bounding_box_regressor_output')(x)
+        return x
+    
+
+    def facial_landmarks_localizer_block(self, input_tensor):
+        x = Conv2D(10, (1, 1), name = 'facial_landmarks_localizer')(input_tensor)
+        x = Reshape((10,), name = 'facial_landmarks_localizer_output')(x)
+        return x
+    
+    
+    def build_network(self):
+        input_layer = Input(shape = self.input_shape)
+        x = self.pnet_conv_block(input_layer, 10, 1, pooling = True)
+        x = self.pnet_conv_block(x, 16, 2, pooling = False)
+        x = self.pnet_conv_block(x, 32, 3, pooling = False)
+        face_classification_output = self.face_classifier_block(x)
+        bounding_box_predictor = self.bounding_box_prediction_block(x)
+        facial_landmarks_localizer = self.facial_landmarks_localizer_block(x)
+        self.model = Model(
+            input_layer, [
+                face_classification_output,
+                bounding_box_predictor,
+                facial_landmarks_localizer
+            ]
+        )
+    
+
+    def summarize(self):
+        self.model.summary()
