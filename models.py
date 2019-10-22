@@ -83,12 +83,15 @@ class Rnet:
     
 
     def rnet_conv_block(self, input_tensor, n_filters, kernel_size, layer_id, pooling = True):
+        # Conv Layer
         x = Conv2D(
             n_filters, (kernel_size, kernel_size),
             strides = 1, padding = 'valid',
             name = 'rnet_conv_' + str(layer_id)
         )(input_tensor)
+        # PReLU Activation Layer
         x = PReLU()(x)
+        # Pooling Layer
         if pooling:
             x = MaxPool2D(pool_size = 2, strides = 2)(x)
         return x
