@@ -18,7 +18,7 @@ class Net12:
         x = MaxPool2D(pool_size = 3, strides = 2)(x)
         x = Flatten()(x)
         x = Dense(16)(x)
-        x = Dense(2, activation = 'sigmoid')(x)
+        x = Dense(2, activation = 'softmax')(x)
         self.model = Model(input_layer, x)
     
 
@@ -31,6 +31,7 @@ class Net12Calibration:
 
     def __init__(self, input_shape = (12, 12, 3)):
         self.input_shape = input_shape
+        self.build_network()
     
 
     def build_network(self):
@@ -39,7 +40,7 @@ class Net12Calibration:
         x = MaxPool2D(pool_size = 3, strides = 2)(x)
         x = Flatten()(x)
         x = Dense(128)(x)
-        x = Dense(2, activation = 'softmax')(x)
+        x = Dense(45, activation = 'softmax')(x)
         self.model = Model(input_layer, x)
     
 
