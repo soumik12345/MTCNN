@@ -122,3 +122,54 @@ class Rnet:
 
     def summarize(self):
         self.model.summary()
+
+
+
+class Onet:
+
+    def __init__(self, input_shape = (48, 48, 3)):
+        self.input_shape = input_shape
+        self.build_network()
+    
+
+    def onet_conv_block(self, input_tensor, n_filters, kernel_size, layer_id, pooling = True):
+        # Conv Layer
+        x = Conv2D(
+            n_filters, (kernel_size, kernel_size),
+            strides = 1, padding = 'valid',
+            name = 'onet_conv_' + str(layer_id)
+        )(input_tensor)
+        # PReLU Activation Layer
+        x = PReLU(name = 'onet_prelu_' + str(layer_id))(x)
+        # Pooling Layer
+        if pooling:
+            x = MaxPool2D(
+                pool_size = 2, strides = 2,
+                name = 'onet_maxpool_' + str(layer_id)
+            )(x)
+        return x
+
+    
+    def build_network(self):
+        input_layer = Input(shape = self.input_shape)
+        x = self.onet_conv_block(input_layer, 32, 3, 1)
+        x = self.onet_conv_block(x, 64, 3, 2)
+        x = self.onet_conv_block(x, 64, 3, 3)
+        x = self.onet_conv_block(x, 128, 2, 4, pooling = False)
+        x = Flatten(name = 'onet_flatten')(x)
+        x = Dense(256, name = 'onet_fully_connected')(x)
+        face_classification_output = Dense(2, activation = 'softmax', name = 'face_classification_output')(x)
+        bounding_box_predictor = Dense(4, activation = 'softmax', name = 'bounding_box_output')(x)
+        facial_landmarks_localizer = Dense(10, activation = 'softmax', name = 'facial_landmark_output')(x)
+        self.model = Model(
+            input_layer, [
+                face_classification_output,
+                bounding_box_predictor,
+                facial_landmarks_localizer
+            ],
+            name = 'Output_Network'
+        )
+    
+
+    def summarize(self):
+        self.model.summary()
