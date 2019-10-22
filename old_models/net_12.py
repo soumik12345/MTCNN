@@ -1,5 +1,5 @@
 from tensorflow.keras.layers import (
-    Input, Conv2D,
+    Input, Conv2D, Activation,
     MaxPool2D, Dense, Flatten
 )
 from tensorflow.keras.models import Model
@@ -16,8 +16,10 @@ class Net12:
         input_layer = Input(shape = self.input_shape)
         x = Conv2D(16, (3, 3), strides = 1, padding = 'same')(input_layer)
         x = MaxPool2D(pool_size = 3, strides = 2)(x)
+        x = Activation('relu')(x)
         x = Flatten()(x)
         x = Dense(16)(x)
+        x = Activation('relu')(x)
         x = Dense(2, activation = 'softmax')(x)
         self.model = Model(input_layer, x)
     
@@ -38,8 +40,10 @@ class Net12Calibration:
         input_layer = Input(shape = self.input_shape)
         x = Conv2D(16, (3, 3), strides = 1, padding = 'same')(input_layer)
         x = MaxPool2D(pool_size = 3, strides = 2)(x)
+        x = Activation('relu')(x)
         x = Flatten()(x)
         x = Dense(128)(x)
+        x = Activation('relu')(x)
         x = Dense(45, activation = 'softmax')(x)
         self.model = Model(input_layer, x)
     
