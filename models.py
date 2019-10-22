@@ -1,6 +1,7 @@
 from tensorflow.keras.layers import (
     Input, Conv2D, PReLU,
-    MaxPool2D, Reshape
+    MaxPool2D, Reshape,
+    Flatten, Dense
 )
 from tensorflow.keras.models import Model
 
@@ -26,7 +27,9 @@ class Pnet:
         )(x)
         # Pooling Layer
         if pooling:
-            x = MaxPool2D(pool_size = 2)(x)
+            x = MaxPool2D(pool_size = 2,
+            name = 'pnet_maxpool_' + str(layer_id)
+        )(x)
         return x
     
 
@@ -61,7 +64,53 @@ class Pnet:
                 face_classification_output,
                 bounding_box_predictor,
                 facial_landmarks_localizer
-            ]
+            ],
+            name = 'Proposal_Network'
+        )
+    
+
+    def summarize(self):
+        self.model.summary()
+
+
+
+
+class Rnet:
+
+    def __init__(self, input_shape = (24, 24, 3)):
+        self.input_shape = input_shape
+        self.build_network()
+    
+
+    def rnet_conv_block(self, input_tensor, n_filters, kernel_size, layer_id, pooling = True):
+        x = Conv2D(
+            n_filters, (kernel_size, kernel_size),
+            strides = 1, padding = 'valid',
+            name = 'rnet_conv_' + str(layer_id)
+        )(input_tensor)
+        x = PReLU()(x)
+        if pooling:
+            x = MaxPool2D(pool_size = 2, strides = 2)(x)
+        return x
+    
+
+    def build_network(self):
+        input_layer = Input(shape = self.input_shape)
+        x = self.rnet_conv_block(input_layer, 28, 3, 1)
+        x = self.rnet_conv_block(x, 48, 3, 2)
+        x = self.rnet_conv_block(x, 64, 2, 3, pooling = False)
+        x = Flatten(name = 'rnet_flatten')(x)
+        x = Dense(128, name = 'rnet_fully_connected')(x)
+        face_classification_output = Dense(2, activation = 'softmax', name = 'face_classification_output')(x)
+        bounding_box_predictor = Dense(4, activation = 'softmax', name = 'bounding_box_output')(x)
+        facial_landmarks_localizer = Dense(10, activation = 'softmax', name = 'facial_landmark_output')(x)
+        self.model = Model(
+            input_layer, [
+                face_classification_output,
+                bounding_box_predictor,
+                facial_landmarks_localizer
+            ],
+            name = 'Refine_Network'
         )
     
 
