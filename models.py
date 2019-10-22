@@ -90,10 +90,13 @@ class Rnet:
             name = 'rnet_conv_' + str(layer_id)
         )(input_tensor)
         # PReLU Activation Layer
-        x = PReLU()(x)
+        x = PReLU(name = 'rnet_prelu_' + str(layer_id))(x)
         # Pooling Layer
         if pooling:
-            x = MaxPool2D(pool_size = 2, strides = 2)(x)
+            x = MaxPool2D(
+                pool_size = 2, strides = 2,
+                name = 'rnet_maxpool_' + str(layer_id)
+            )(x)
         return x
     
 
