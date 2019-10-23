@@ -1,3 +1,4 @@
 __pycache__/
 .vscode/
+old_models/__pycache__/
 test.py
